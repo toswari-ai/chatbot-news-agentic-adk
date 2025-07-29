@@ -9,36 +9,36 @@ import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import requests
+import litellm
+from litellm import completion
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types
+from google.genai.types import Tool, FunctionDeclaration
+from google.adk.models.lite_llm import LiteLlm
 
 # Load environment variables
 load_dotenv()
 
-try:
-    import litellm
-    from litellm import completion
-    # Enable LiteLLM debug mode
-    litellm.set_verbose = True
-    import litellm
-    litellm._turn_on_debug()
-    LITELLM_AVAILABLE = True
-except ImportError:
-    LITELLM_AVAILABLE = False
-    print("⚠️ LiteLLM not available. Basic functionality only.")
-
-try:
-    from google import genai
-    from google.genai import types
-    from google.genai.types import Tool, FunctionDeclaration
-    from google.adk.models.lite_llm import LiteLlm
-    GOOGLE_ADK_AVAILABLE = True
-except ImportError:
-    GOOGLE_ADK_AVAILABLE = False
-    print("⚠️ Google ADK not available. Using fallback search.")
+# Enable LiteLLM debug mode
+litellm.set_verbose = True
+litellm._turn_on_debug()
+LITELLM_AVAILABLE = True
+GOOGLE_ADK_AVAILABLE = True
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    force=True
+)
 logger = logging.getLogger(__name__)
+
+# Also ensure all logger messages are visible
+logger.setLevel(logging.INFO)
+
+# Test logging immediately when module loads
+logger.info("🔧 News Agent module loaded - logging is active")
 
 class NewsAgent:
     """
@@ -82,6 +82,8 @@ class NewsAgent:
             logger.info(f"🔧 Using Clarifai model: {self.clarifai_model_name}")
             logger.info(f"🔧 Base URL: https://api.clarifai.com/v2/ext/openai/v1")
             logger.info(f"🔧 PAT length: {len(self.clarifai_pat)}")
+            print(f"🔧 Using Clarifai model: {self.clarifai_model_name}")
+            print(f"🔧 Base URL: https://api.clarifai.com/v2/ext/openai/v1")
             
             # Set up LiteLLM with Clarifai base URL
             if GOOGLE_ADK_AVAILABLE:
@@ -92,13 +94,16 @@ class NewsAgent:
                         api_key=self.clarifai_pat
                     )
                     logger.info("✅ Google ADK LiteLLM configured for Clarifai")
+                    print("✅ Google ADK LiteLLM configured for Clarifai")  # Ensure visibility
                 except Exception as e:
                     logger.warning(f"⚠️ Google ADK LiteLLM setup failed: {e}")
+                    print(f"⚠️ Google ADK LiteLLM setup failed: {e}")  # Ensure visibility
                     self.llm_model = None
             else:
                 self.llm_model = None
                 
             logger.info("✅ LiteLLM configured for Clarifai")
+            print("✅ LiteLLM configured for Clarifai")
         else:
             logger.warning("⚠️ CLARIFAI_PAT not set - AI features will be limited")
             self.llm_model = None
@@ -158,6 +163,8 @@ class NewsAgent:
             logger.info("🔧 Testing Clarifai connection...")
             logger.info(f"🔧 Model: {self.clarifai_model_name}")
             logger.info(f"🔧 Base URL: https://api.clarifai.com/v2/ext/openai/v1")
+            print("🔧 Testing Clarifai connection...")
+            print(f"🔧 Model: {self.clarifai_model_name}")
             
             # Test using Clarifai OpenAI-compatible endpoint
             response = completion(
@@ -171,6 +178,7 @@ class NewsAgent:
             
             result = bool(response.choices[0].message.content)
             logger.info(f"✅ Connection test successful: {response.choices[0].message.content}")
+            print(f"✅ Connection test successful: {response.choices[0].message.content}")
             return result
             
         except Exception as e:
@@ -184,6 +192,7 @@ class NewsAgent:
         try:
             # Fallback to simple web search if Google ADK is not available
             if not GOOGLE_ADK_AVAILABLE or not self.genai_client:
+                print("🔴 Google ADK not available, using fallback search")
                 return self._fallback_search(query, num_results)
             
             # Use Google ADK for search

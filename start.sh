@@ -100,9 +100,6 @@ echo ""
 
 # Configure logging environment variables
 echo "🔧 Configuring debug logging..."
-export LITELLM_LOG=DEBUG
-export PYTHONPATH="${PYTHONPATH}:."
-export STREAMLIT_LOGGER_LEVEL=INFO
 
 echo "✅ Debug logging enabled:"
 echo "   - LiteLLM: DEBUG level"
@@ -113,4 +110,5 @@ echo "📊 Logger info will be displayed in the terminal output below"
 echo "🔍 Look for messages with ✅, 🔧, ⚠️, and 🔴 emojis for agent status"
 echo ""
 
-conda run -n agent_312 streamlit run app.py
+# Run with environment variables passed to conda
+LITELLM_LOG=DEBUG PYTHONPATH="${PYTHONPATH}:." STREAMLIT_LOGGER_LEVEL=INFO conda run -n agent_312 streamlit run app.py
