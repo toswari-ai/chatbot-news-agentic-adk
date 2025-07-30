@@ -12,12 +12,15 @@
 
 - 🌐 **Real-time News Search** - Powered by Google ADK and MCP tools
 - 🤖 **AI-powered Analysis** - Multiple model support via Clarifai API
-- 💬 **Interactive Chat Interface** - Beautiful Streamlit web application
+- 💬 **Interactive Chat Interface** - Beautiful Streamlit web application with modern dark theme
 - 🎯 **Quick Start Cards** - Pre-built queries for World News, Tech & Business, Health & Science
 - 🔄 **Model Selection** - Support for GPT-4o, Claude 3.5 Sonnet, LLaMA models
-- 📱 **Responsive Design** - Mobile-friendly interface with dark theme support
+- 📊 **LLM Statistics Tracking** - Real-time token usage, response times, and performance metrics
+- 📱 **Responsive Design** - Mobile-friendly interface with modern black/white styling
 - 🔍 **Debug Mode** - Comprehensive logging for troubleshooting
 - ⚡ **LiteLLM Integration** - Unified interface for multiple AI providers
+- 📈 **Performance Analytics** - Session-wide statistics and per-message metrics
+- 🎨 **Enhanced UI/UX** - Markdown rendering, styled containers, and professional design
 
 ## 🏗️ Architecture
 
@@ -152,6 +155,56 @@ Choose from multiple AI models in the sidebar:
 - **GPT-4o Mini** - Faster, cost-effective version
 - **Claude 3.5 Sonnet** - Anthropic's advanced model
 - **LLaMA 3.1 8B** - Meta's open-source model
+
+### 📊 LLM Statistics & Performance Monitoring
+
+The application provides comprehensive real-time analytics for LLM usage:
+
+#### Sidebar Statistics Panel
+- **Latest Response Metrics**: Model used, tokens consumed, response speed, duration
+- **Session Totals**: Cumulative token usage, total responses, average speed
+- **Performance Tracking**: Tokens per second, response timing analysis
+
+#### Per-Message Statistics
+Each AI response includes detailed performance metrics:
+- **Model Information**: Which AI model processed the request
+- **Token Breakdown**: Prompt tokens, response tokens, total usage
+- **Performance Data**: Response duration and processing speed
+- **Cost Estimation**: Token usage for billing and optimization
+
+#### Key Metrics Tracked
+- 🔢 **Token Usage**: Prompt tokens, response tokens, total consumption
+- ⏱️ **Response Time**: Processing duration in seconds
+- 🚀 **Speed**: Tokens generated per second
+- 📈 **Session Analytics**: Cumulative statistics across the session
+- 🎯 **Model Performance**: Compare efficiency across different AI models
+
+This helps users:
+- Monitor API usage and costs
+- Compare model performance
+- Optimize query efficiency
+- Track session productivity
+
+### 🎨 Enhanced User Interface
+
+The application features a modern, professional interface with:
+
+#### Dark Theme Design
+- **Modern Styling**: Black backgrounds with white text for reduced eye strain
+- **Styled Containers**: Consistent design language across all UI components
+- **Professional Layout**: Clean, organized interface with intuitive navigation
+
+#### Interactive Elements
+- **Markdown Rendering**: Full support for formatted text, lists, and headers
+- **Responsive Design**: Optimized for desktop and mobile devices
+- **Quick Start Cards**: One-click access to popular query types
+- **Real-time Updates**: Live statistics and performance monitoring
+
+#### Visual Features
+- **Status Indicators**: Color-coded connection and agent status
+- **Statistics Containers**: Styled boxes for performance metrics display
+- **Message Styling**: Distinct formatting for user and AI messages
+- **Loading States**: Professional spinners and progress indicators
 
 ## 🧪 Testing
 
@@ -319,6 +372,29 @@ python test_chatbot.py
 # Format code (optional)
 black app.py news_agent_clarifai.py
 ```
+
+## 🆕 Recent Updates
+
+### Version 1.2.0 - LLM Analytics & Enhanced UI (January 2025)
+
+#### ✨ New Features
+- **📊 LLM Statistics Tracking**: Real-time monitoring of token usage, response times, and performance metrics
+- **🎨 Enhanced Dark Theme**: Modern black/white styling with professional visual design
+- **📈 Performance Analytics**: Session-wide statistics and per-message metrics display
+- **📝 Improved Markdown**: Enhanced text rendering with proper formatting support
+- **🔧 Styled Containers**: Consistent design language across all UI components
+
+#### 🚀 Performance Improvements
+- **Optimized Token Counting**: Accurate estimation for cost monitoring
+- **Response Timing**: Precise duration tracking for performance analysis
+- **Statistics Caching**: Efficient session state management
+- **UI Responsiveness**: Faster rendering of statistics and chat messages
+
+#### 🐛 Bug Fixes
+- Fixed statistics container HTML structure for proper styling
+- Improved message formatting and display consistency
+- Enhanced error handling for API failures
+- Better mobile responsiveness and layout stability
 
 ## 📋 Roadmap
 
