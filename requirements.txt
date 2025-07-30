@@ -6,3 +6,6 @@ google-adk
 litellm
 clarifai
 
+# Additional dependencies for enhanced functionality
+mcp>=1.0.0
+

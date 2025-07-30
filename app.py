@@ -700,15 +700,8 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
         "timestamp": timestamp
     })
     
-    # Display user message immediately
-    import html
-    escaped_prompt = html.escape(prompt)
-    st.markdown(f"""
-    <div class="chat-message user-message">
-        <strong>👤 You</strong> <small>{timestamp}</small><br>
-        <div style="white-space: pre-wrap;">{escaped_prompt}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Note: User message will be displayed by the main message loop above
+    # No need to display it again here to avoid duplication
     
     # Generate response
     if use_streaming:
