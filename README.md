@@ -14,7 +14,7 @@
 - 🌐 **Real-time News Search** - Powered by Serper API, Google ADK, and MCP tools
 - 🤖 **AI-powered Analysis** - Multiple model support via Clarifai API
 - 💬 **Interactive Chat Interface** - Beautiful Streamlit web application with modern dark theme
-- 🎯 **Quick Start Cards** - Pre-built queries for World News, Tech & Business, Health & Science
+- 🎯 **Quick Start Cards** - Pre-built queries for World News, Tech & Business, Health & Science, Latest AI News
 - 🔄 **Model Selection** - Support for GPT-4o, Claude 3.5 Sonnet, LLaMA models
 - 📊 **LLM Statistics Tracking** - Real-time token usage, response times, and performance metrics
 - 🔄 **Streaming Responses** - Real-time AI text generation with live updates

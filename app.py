@@ -499,7 +499,9 @@ st.markdown("""
 # Sample query cards
 st.subheader("🎯 Quick Start - Sample Queries")
 
-col1, col2, col3 = st.columns(3)
+# Update: Only 2 columns per row
+col1, col2 = st.columns(2)
+col3, col4 = st.columns(2)
 
 sample_queries = [
     {
@@ -516,10 +518,20 @@ sample_queries = [
         "title": "🏥 Health & Science",
         "description": "Health and scientific breakthroughs", 
         "query": "What are the recent medical and scientific discoveries?"
+    },
+    {
+        "title": "🧠 Latest AI News",
+        "description": "Cutting-edge news in artificial intelligence",
+        "query": "What are the latest news and breakthroughs in artificial intelligence?"
     }
 ]
 
-for i, (col, sample) in enumerate(zip([col1, col2, col3], sample_queries)):
+# Display 2 cards per row
+for i, sample in enumerate(sample_queries):
+    if i < 2:
+        col = [col1, col2][i]
+    else:
+        col = [col3, col4][i-2]
     with col:
         if st.button(
             f"**{sample['title']}**\n\n{sample['description']}", 
@@ -644,6 +656,7 @@ st.divider()
 st.subheader("💬 Chat with News AI")
 
 # Display chat messages (excluding the last one if it's currently streaming)
+streaming_placeholder = None
 for i, message in enumerate(st.session_state.messages):
     timestamp = message.get('timestamp', '')
     
@@ -651,6 +664,8 @@ for i, message in enumerate(st.session_state.messages):
     if (use_streaming and i == len(st.session_state.messages) - 1 and 
         message["role"] == "assistant" and 
         hasattr(st.session_state, '_just_streamed')):
+        # Instead, create a placeholder for streaming output in the chat
+        streaming_placeholder = st.empty()
         continue
     
     # Skip the last user message if it was just added in the current interaction
@@ -705,129 +720,81 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
         "content": prompt,
         "timestamp": timestamp
     })
-    
-    # Display user message immediately
-    import html
-    escaped_prompt = html.escape(prompt)
-    st.markdown(f"""
-    <div class="chat-message user-message">
-        <strong>👤 You</strong> <small>{timestamp}</small><br>
-        <div style="white-space: pre-wrap;">{escaped_prompt}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
     # Mark that we just added a user message
     st.session_state._just_added_user_message = True
-    
-    # Show processing indicator
-    with st.spinner("🤖 News AI is processing your request..."):
-        st.write("🔍 Searching for relevant news and analyzing...")
-    
+    # Instead of showing a separate spinner, add a placeholder to the main chat container
+    if streaming_placeholder is None:
+        streaming_placeholder = st.empty()
+    streaming_placeholder.markdown(f"""
+    <div class='chat-message assistant-message'>
+        <strong>🤖 News AI</strong> <small>{datetime.now().strftime('%H:%M:%S')}</small><br>
+        <span style='color:#aaa;'>🔍 Searching for relevant news and analyzing...</span>
+    </div>
+    """, unsafe_allow_html=True)
     # Generate response
     if use_streaming:
         # Streaming response with integrated container
         try:
             if st.session_state.news_agent:
-                # Handle streaming response with container management
-                response, duration, response_timestamp, stats = handle_streaming_response_with_container(
-                    st.session_state.news_agent, 
-                    prompt, 
-                    st.session_state.get('current_model', 'Unknown')
-                )
-                
-                # Add assistant response to session state
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content": response,
-                    "timestamp": response_timestamp
-                })
-                
-                # Store LLM statistics if available
-                if stats:
+                with streaming_placeholder:
+                    st.markdown(f"""
+                    <div class='chat-message assistant-message'>
+                        <strong>🤖 News AI</strong> <small>{datetime.now().strftime('%H:%M:%S')}</small><br>
+                        <div id='streaming-content'></div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    streaming_content = st.empty()
+                    import time
+                    streamed_content = ""
+                    for chunk in st.session_state.news_agent.search_and_analyze_stream(prompt):
+                        streamed_content += chunk
+                        streaming_content.markdown(process_assistant_content(streamed_content))
+                    streaming_placeholder.empty()
+                    response_timestamp = datetime.now().strftime("%H:%M:%S")
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": streamed_content,
+                        "timestamp": response_timestamp
+                    })
+                    duration = 0
+                    current_model = st.session_state.get('current_model', 'Unknown')
+                    stats = format_llm_stats(prompt, streamed_content, duration, current_model)
                     st.session_state.llm_stats.append(stats)
-                
-                # Mark that we just streamed a response to avoid duplication
-                st.session_state._just_streamed = True
-                
+                    st.session_state._just_streamed = True
             else:
                 error_msg = "❌ News agent is not initialized. Please check your configuration."
                 response_timestamp = datetime.now().strftime("%H:%M:%S")
-                
-                # Display error in proper container
-                st.markdown(f"""
-                <div class="chat-message assistant-message">
-                    <strong>🤖 News AI</strong> <small>{response_timestamp}</small><br>
-                """, unsafe_allow_html=True)
-                st.markdown(error_msg)
-                st.markdown('</div>', unsafe_allow_html=True)
-                
                 st.session_state.messages.append({
                     "role": "assistant", 
                     "content": error_msg,
                     "timestamp": response_timestamp
                 })
-                
         except Exception as e:
             error_msg = f"❌ Error generating response: {str(e)}"
             response_timestamp = datetime.now().strftime("%H:%M:%S")
-            
-            # Display error in proper container
-            st.markdown(f"""
-            <div class="chat-message assistant-message">
-                <strong>🤖 News AI</strong> <small>{response_timestamp}</small><br>
-            """, unsafe_allow_html=True)
-            st.markdown(error_msg)
-            st.markdown('</div>', unsafe_allow_html=True)
-            
             st.session_state.messages.append({
                 "role": "assistant", 
                 "content": error_msg,
                 "timestamp": response_timestamp
             })
-        
     else:
         # Non-streaming response (original behavior)
         try:
             if st.session_state.news_agent:
-                # Track timing for statistics
                 import time
                 start_time = time.time()
-                
                 response = st.session_state.news_agent.search_and_analyze(prompt)
-                
-                # Calculate duration and statistics
                 end_time = time.time()
                 duration = end_time - start_time
-                
-                # Add assistant response
                 response_timestamp = datetime.now().strftime("%H:%M:%S")
                 st.session_state.messages.append({
                     "role": "assistant", 
                     "content": response,
                     "timestamp": response_timestamp
                 })
-                
-                # Calculate and store LLM statistics
                 current_model = st.session_state.get('current_model', 'Unknown')
                 stats = format_llm_stats(prompt, response, duration, current_model)
                 st.session_state.llm_stats.append(stats)
-                
-                # Display assistant response with Markdown rendering
-                processed_response = process_assistant_content(response)
-                
-                # Render everything in a single container
-                st.markdown(f"""
-                <div class="chat-message assistant-message">
-                    <strong>🤖 News AI</strong> <small>{response_timestamp}</small><br>
-                """, unsafe_allow_html=True)
-                st.markdown(processed_response)
-                
-                # Display LLM statistics for this response
-                stats_html = display_llm_stats(stats, dark_theme=True)
-                st.markdown(stats_html, unsafe_allow_html=True)
-                
-                st.markdown('</div>', unsafe_allow_html=True)
-                
             else:
                 error_msg = "❌ News agent is not initialized. Please check your configuration."
                 st.session_state.messages.append({
@@ -835,8 +802,6 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
                     "content": error_msg,
                     "timestamp": datetime.now().strftime("%H:%M:%S")
                 })
-                st.error(error_msg)
-                
         except Exception as e:
             error_msg = f"❌ Error generating response: {str(e)}"
             st.session_state.messages.append({
@@ -844,8 +809,6 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
                 "content": error_msg,
                 "timestamp": datetime.now().strftime("%H:%M:%S")
             })
-            st.error(error_msg)
-    
     st.rerun()
 
 # Footer

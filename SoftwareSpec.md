@@ -13,7 +13,7 @@
 ### User Interface Components
 
 - **Main Chat Interface**: Interactive conversation with AI assistant
-- **Sample Query Cards**: 3 pre-built query options (World News, Tech & Business, Health & Science)
+- **Sample Query Cards**: 4 pre-built query options (World News, Tech & Business, Health & Science, Latest AI News) with 2 cards per row for improved layout
 - **Sidebar Configuration**: Model selection, connection status, and controls
 - **Real-time Statistics**: LLM performance monitoring and analytics
 - **Modern Dark Theme**: Professional black/white styling with responsive design
@@ -188,6 +188,7 @@ LITELLM_LOG=INFO
 - [x] Error handling and status indicators
 - [x] Markdown rendering support
 - [x] **Streaming Responses** - Real-time AI text generation with live updates
+- [x] **Latest AI News sample card** and 2-cards-per-row layout in sample queries
 
 ### Future Enhancements 🔄
 
