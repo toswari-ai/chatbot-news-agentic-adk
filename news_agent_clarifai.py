@@ -1,6 +1,6 @@
 """
 News Agent for Clarifai Integration
-Handles news search using Google ADK and AI analysis via Clarifai models through LiteLLM
+Handles news search using Google ADK, Serper API, and AI analysis via Clarifai models through LiteLLM
 """
 
 import os
@@ -40,6 +40,15 @@ logger.setLevel(logging.INFO)
 # Test logging immediately when module loads
 logger.info("🔧 News Agent module loaded - logging is active")
 
+# Import Serper search tool
+try:
+    from serper_search_tool import SerperSearchTool, SERPER_TOOLS
+    SERPER_AVAILABLE = True
+    logger.info("✅ Serper search tool loaded")
+except ImportError:
+    SERPER_AVAILABLE = False
+    logger.warning("⚠️ Serper search tool not available")
+
 class NewsAgent:
     """
     News Agent that combines Google ADK for search capabilities
@@ -56,6 +65,31 @@ class NewsAgent:
         
         self.setup_litellm()
         self.setup_google_adk()
+        self.setup_serper_search()
+        
+    def setup_serper_search(self):
+        """Setup Serper API for search capabilities"""
+        if not SERPER_AVAILABLE:
+            logger.warning("⚠️ Serper search tool not available")
+            self.serper_tool = None
+            return
+            
+        try:
+            # Initialize Serper search tool
+            self.serper_tool = SerperSearchTool()
+            
+            # Test connection
+            if self.serper_tool.test_connection():
+                logger.info("✅ Serper API connection successful")
+                print("✅ Serper API connection successful")
+            else:
+                logger.warning("⚠️ Serper API connection failed")
+                print("⚠️ Serper API connection failed")
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to setup Serper API: {str(e)}")
+            print(f"❌ Failed to setup Serper API: {str(e)}")
+            self.serper_tool = None
         
     def _convert_to_clarifai_format(self, model_name: str) -> str:
         """Convert model name to Clarifai OpenAI-compatible format"""
@@ -188,13 +222,78 @@ class NewsAgent:
             return bool(self.clarifai_pat and self.clarifai_pat != 'your_clarifai_personal_access_token_here')
     
     def search_news(self, query: str, num_results: int = 5) -> List[Dict]:
-        """Search for news using Google Search"""
+        """Search for news using available search tools (Serper API preferred, Google ADK fallback)"""
         try:
-            # Fallback to simple web search if Google ADK is not available
-            if not GOOGLE_ADK_AVAILABLE or not self.genai_client:
-                print("🔴 Google ADK not available, using fallback search")
-                return self._fallback_search(query, num_results)
+            # Priority 1: Use Serper API if available
+            if SERPER_AVAILABLE and self.serper_tool:
+                print("🔍 Using Serper API for news search")
+                return self._search_with_serper(query, num_results)
             
+            # Priority 2: Use Google ADK if available
+            elif GOOGLE_ADK_AVAILABLE and self.genai_client:
+                print("🔍 Using Google ADK for news search")
+                return self._search_with_google_adk(query, num_results)
+            
+            # Fallback: Simple web search
+            else:
+                print("🔴 No advanced search tools available, using fallback search")
+                return self._fallback_search(query, num_results)
+                
+        except Exception as e:
+            logger.error(f"❌ Search failed: {str(e)}")
+            return self._fallback_search(query, num_results)
+    
+    def _search_with_serper(self, query: str, num_results: int = 5) -> List[Dict]:
+        """Search for news using Serper API"""
+        try:
+            # Use news-specific search for better results
+            results = self.serper_tool.search_news(query, num_results)
+            
+            if "error" in results:
+                logger.error(f"Serper API error: {results['error']}")
+                return []
+            
+            # Convert Serper results to our standard format
+            search_results = []
+            
+            # Process news results
+            if "news" in results:
+                for article in results["news"][:num_results]:
+                    search_results.append({
+                        "title": article.get("title", "No title"),
+                        "url": article.get("link", ""),
+                        "snippet": article.get("snippet", "No description available"),
+                        "source": article.get("source", "Unknown source"),
+                        "date": article.get("date", "No date"),
+                        "published": article.get("date", datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+                        "search_engine": "Serper API"
+                    })
+            
+            # If no news results, try general search
+            if not search_results:
+                general_results = self.serper_tool.search(f"news {query}", num_results)
+                if "organic" in general_results:
+                    for item in general_results["organic"][:num_results]:
+                        search_results.append({
+                            "title": item.get("title", "No title"),
+                            "url": item.get("link", ""),
+                            "snippet": item.get("snippet", "No description available"),
+                            "source": "Web search",
+                            "date": "Recent",
+                            "published": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "search_engine": "Serper API"
+                        })
+            
+            logger.info(f"✅ Serper search found {len(search_results)} results")
+            return search_results
+            
+        except Exception as e:
+            logger.error(f"❌ Serper search failed: {str(e)}")
+            return []
+    
+    def _search_with_google_adk(self, query: str, num_results: int = 5) -> List[Dict]:
+        """Search for news using Google ADK"""
+        try:
             # Use Google ADK for search
             search_results = []
             

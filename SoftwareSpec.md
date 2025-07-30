@@ -198,6 +198,26 @@ LITELLM_LOG=INFO
 - [ ] Custom news source integration
 - [ ] Real-time news notifications
 - [ ] User preference management
+- [ ] Integrate Serper API for live search
+
+## Sample code for serper ai search
+
+import requests
+import json
+
+url = "<https://google.serper.dev/search>"
+
+payload = json.dumps({
+  "q": "top 5 news today"
+})
+headers = {
+  'X-API-KEY': '9c82fd604ec4e106e845ac732c5a9c3fae947140',
+  'Content-Type': 'application/json'
+}
+
+response = requests.request("POST", url, headers=headers, data=payload)
+
+print(response.text)
 
 ## 🎯 Success Criteria
 
@@ -218,5 +238,3 @@ LITELLM_LOG=INFO
 5. **Accessibility**: Responsive design for various devices and screen sizes
 
 ---
-
-*Software Specification v1.2.0 - Updated January 2025*

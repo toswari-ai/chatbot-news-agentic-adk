@@ -1,4 +1,27 @@
-# 📰 Clarifai News Chatbot
+# 📰 Clarifai News C## ✨ Features
+
+- 🌐 **Real-time News Search** - Powered by Serper API, Google ADK, and MCP tools
+- 🤖 **AI-powered Analysis** - Multiple model support via Clarifai API
+- 💬 **Interactive Chat Interface** - Beautiful Streamlit web application with modern dark theme
+- 🎯 **Quick Start Cards** - Pre-built queries for World News, Tech & Business, Health & Science
+- 🔄 **Model Selection** - Support for GPT-4o, Claude 3.5 Sonnet, LLaMA models
+- 📊 **LLM Statistics Tracking** - Real-time token usage, response times, and performance metrics
+- 🔄 **Streaming Responses** - Real-time AI text generation with live updates
+- 📱 **Responsive Design** - Mobile-friendly interface with modern black/white styling
+- 🔍 **Debug Mode** - Comprehensive logging for troubleshooting
+- ⚡ **LiteLLM Integration** - Unified interface for multiple AI providers
+- 📈 **Performance Analytics** - Session-wide statistics and per-message metrics
+- 🎨 **Enhanced UI/UX** - Markdown rendering, styled containers, and professional design
+- 🔎 **Advanced Search** - Serper API integration for enhanced Google search and news results
+- 🛠️ **MCP Integration** - Model Context Protocol tools for extensible functionalityhon](<https://img.shields.io/badge/Python-3.8+-blue.svg>)](<https://python.org>)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io)
+[![Clarifai](https://img.shields.io/badge/Clarifai-API-orange.svg)](https://clarifai.com)
+[![Google ADK](https://img.shields.io/badge/Google-ADK-green.svg)](https://developers.google.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+> 🤖 **AI-powered news chatbot** built with Clarifai API, Google Agent Development Kit (ADK), and Streamlit for intelligent news search and analysis.
+
+## ✨ Features
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io)
@@ -25,15 +48,25 @@
 
 ## 🏗️ Architecture
 
-```
+```mermaid
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Streamlit UI  │────│  News Agent     │────│  Clarifai API   │
 │   (Frontend)    │    │  (Core Logic)   │    │  (AI Models)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          │              ┌─────────────────┐              │
-         └──────────────│  Google ADK     │-─────────────┘
-                        │  (News Search)  │
+         │              │  Serper API     │              │
+         │              │ (Google Search) │              │
+         │              └─────────────────┘              │
+         │                       │                       │
+         │              ┌─────────────────┐              │
+         └──────────────│  Google ADK     │──────────────┘
+                        │  (News Tools)   │
+                        └─────────────────┘
+                               │
+                        ┌─────────────────┐
+                        │   MCP Server    │
+                        │ (Tool Protocol) │
                         └─────────────────┘
 ```
 
@@ -107,6 +140,7 @@
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
 | `CLARIFAI_PAT` | Clarifai Personal Access Token | ✅ Yes | None |
+| `SERPER_API_KEY` | Serper API Key for Google Search | ⭐ Recommended | None |
 | `GOOGLE_API_KEY` | Google Custom Search API Key | ⚠️ Optional | None |
 | `GOOGLE_SEARCH_ENGINE_ID` | Google Search Engine ID | ⚠️ Optional | None |
 | `LITELLM_LOG` | Enable LiteLLM debug logging | ❌ No | `INFO` |
@@ -120,12 +154,48 @@
 3. Create a new Personal Access Token
 4. Copy the token to your `.env` file
 
+#### Serper API Key (Recommended)
+
+1. Visit [Serper.dev](https://serper.dev/)
+2. Sign up for a free account
+3. Get your API key from the dashboard
+4. Add `SERPER_API_KEY=your_key_here` to your `.env` file
+5. Enjoy enhanced Google search and news results
+
 #### Google Custom Search API (Optional)
 
 1. Visit [Google Cloud Console](https://console.cloud.google.com)
 2. Enable the Custom Search JSON API
 3. Create credentials and get your API key
 4. Set up a Custom Search Engine at [Google CSE](https://cse.google.com)
+
+## 🛠️ MCP Tools & Search Integration
+
+### Serper API Integration
+
+The chatbot now includes **Serper API** integration for enhanced Google search capabilities:
+
+- **🔍 Google Web Search** - Access real-time web search results
+- **📰 Google News Search** - Dedicated news article search
+- **📊 Search Analytics** - Comprehensive result formatting and analysis
+- **⚡ High Performance** - Fast, reliable search results
+- **🎯 Intelligent Fallback** - Automatic fallback to Google ADK if Serper unavailable
+
+### Available MCP Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `google_search` | General Google search via Serper API | `query`, `num_results`, `location` |
+| `google_news_search` | News-specific search via Serper API | `query`, `num_results` |
+| `news_summarize` | Summarize multiple news articles | `articles`, `focus` |
+| `news_trends` | Analyze news trends and patterns | `query`, `timeframe` |
+| `check_source_credibility` | Evaluate news source credibility | `source_name`, `source_url` |
+
+### Search Priority System
+
+1. **🥇 Serper API** - Primary search engine (when API key available)
+2. **🥈 Google ADK** - Secondary search via Google Agent tools
+3. **🥉 Fallback** - Basic web search when other methods unavailable
 
 ## 🎯 Usage
 
