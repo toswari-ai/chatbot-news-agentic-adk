@@ -133,8 +133,43 @@ st.markdown("""
         color: #ffffff !important;
         margin: 0.5rem 0 0.3rem 0;
     }
-    .user-message * {
+        .user-message * {
         color: #000000 !important;
+    }
+    .llm-stats {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    .llm-stats-dark {
+        background-color: #2d2d2d;
+        border: 1px solid #444444;
+        color: #cccccc;
+    }
+    .stat-item {
+        display: inline-block;
+        margin-right: 1rem;
+        margin-bottom: 0.2rem;
+    }
+    .stat-label {
+        font-weight: bold;
+    }
+    .stats-container {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        font-size: 0.9rem;
+    }
+    .stats-container-dark {
+        background-color: #2d2d2d;
+        border: 1px solid #444444;
+        color: #ffffff;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -146,6 +181,8 @@ if 'news_agent' not in st.session_state:
     st.session_state.news_agent = None
 if 'clarifai_connected' not in st.session_state:
     st.session_state.clarifai_connected = False
+if 'llm_stats' not in st.session_state:
+    st.session_state.llm_stats = []
 
 def process_assistant_content(content):
     """Process assistant content to improve formatting for Markdown"""
@@ -164,6 +201,55 @@ def process_assistant_content(content):
     content = re.sub(r'\n(\d+\.\s|\*\s|-\s)', r'\n\1', content)
     
     return content.strip()
+
+def calculate_tokens(text):
+    """Estimate token count (approximate)"""
+    # Simple approximation: ~4 characters per token for English text
+    return len(text) // 4
+
+def format_llm_stats(prompt, response, duration, model_name):
+    """Format LLM statistics for display"""
+    prompt_tokens = calculate_tokens(prompt)
+    response_tokens = calculate_tokens(response)
+    total_tokens = prompt_tokens + response_tokens
+    tokens_per_second = response_tokens / duration if duration > 0 else 0
+    
+    return {
+        "model": model_name,
+        "prompt_tokens": prompt_tokens,
+        "response_tokens": response_tokens,
+        "total_tokens": total_tokens,
+        "duration": duration,
+        "tokens_per_second": tokens_per_second
+    }
+
+def display_llm_stats(stats, dark_theme=True):
+    """Display LLM statistics as HTML"""
+    theme_class = "llm-stats-dark" if dark_theme else ""
+    
+    stats_html = f"""
+    <div class="llm-stats {theme_class}">
+        <div class="stat-item">
+            <span class="stat-label">Model:</span> {stats['model']}
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Prompt Tokens:</span> {stats['prompt_tokens']:,}
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Response Tokens:</span> {stats['response_tokens']:,}
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Total Tokens:</span> {stats['total_tokens']:,}
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Duration:</span> {stats['duration']:.2f}s
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Tokens/sec:</span> {stats['tokens_per_second']:.1f}
+        </div>
+    </div>
+    """
+    return stats_html
 
 def initialize_agent(model_name):
     """Initialize the news agent with selected model"""
@@ -249,12 +335,51 @@ with st.sidebar:
     # Clear chat button
     if st.button("🗑️ Clear Chat", use_container_width=True):
         st.session_state.messages = []
+        st.session_state.llm_stats = []
         st.rerun()
     
     # Refresh connection button
     if st.button("🔄 Refresh Connection", use_container_width=True):
         st.session_state.clarifai_connected = test_clarifai_connection()
         st.rerun()
+    
+    # LLM Statistics section
+    st.subheader("📊 LLM Statistics")
+    if st.session_state.llm_stats:
+        latest_stats = st.session_state.llm_stats[-1]
+        
+        # Show total stats
+        total_tokens = sum(stat['total_tokens'] for stat in st.session_state.llm_stats)
+        total_responses = len(st.session_state.llm_stats)
+        avg_speed = sum(stat['tokens_per_second'] for stat in st.session_state.llm_stats) / total_responses
+        
+        # Create a styled container for the statistics
+        stats_content = f"""
+        <div class="stats-container stats-container-dark">
+            <div style="margin-bottom: 1rem;">
+                <strong>Latest Response:</strong><br>
+                • <strong>Model:</strong> <code>{latest_stats['model']}</code><br>
+                • <strong>Tokens:</strong> {latest_stats['total_tokens']:,}<br>
+                • <strong>Speed:</strong> {latest_stats['tokens_per_second']:.1f} tok/sec<br>
+                • <strong>Duration:</strong> {latest_stats['duration']:.2f}s
+            </div>
+            <hr style="border-color: #444444; margin: 0.5rem 0;">
+            <div>
+                <strong>Session Totals:</strong><br>
+                • <strong>Total Tokens:</strong> {total_tokens:,}<br>
+                • <strong>Responses:</strong> {total_responses}<br>
+                • <strong>Avg Speed:</strong> {avg_speed:.1f} tok/sec
+            </div>
+        </div>
+        """
+        
+        st.markdown(stats_content, unsafe_allow_html=True)
+        
+        if st.button("🗑️ Clear Stats", use_container_width=True):
+            st.session_state.llm_stats = []
+            st.rerun()
+    else:
+        st.info("No statistics available yet. Send a message to see LLM performance metrics.")
 
 # Main header
 st.markdown("""
@@ -307,7 +432,16 @@ for i, (col, sample) in enumerate(zip([col1, col2, col3], sample_queries)):
                 try:
                     if st.session_state.news_agent:
                         st.write("🔍 Processing your query...")  # Debug output
+                        
+                        # Track timing for statistics
+                        import time
+                        start_time = time.time()
+                        
                         response = st.session_state.news_agent.search_and_analyze(sample['query'])
+                        
+                        # Calculate duration and statistics
+                        end_time = time.time()
+                        duration = end_time - start_time
                         
                         # Add assistant response
                         response_timestamp = datetime.now().strftime("%H:%M:%S")
@@ -316,6 +450,12 @@ for i, (col, sample) in enumerate(zip([col1, col2, col3], sample_queries)):
                             "content": response,
                             "timestamp": response_timestamp
                         })
+                        
+                        # Calculate and store LLM statistics
+                        current_model = st.session_state.get('current_model', 'Unknown')
+                        stats = format_llm_stats(sample['query'], response, duration, current_model)
+                        st.session_state.llm_stats.append(stats)
+                        
                         st.write("✅ Response generated!")  # Debug output
                         
                     else:
@@ -367,6 +507,14 @@ for message in st.session_state.messages:
             <strong>🤖 News AI</strong> <small>{timestamp}</small><br>
         """, unsafe_allow_html=True)
         st.markdown(processed_content)
+        
+        # Find and display corresponding LLM statistics
+        message_index = len(st.session_state.messages) - 1 - list(reversed(st.session_state.messages)).index(message)
+        if message_index < len(st.session_state.llm_stats):
+            stats = st.session_state.llm_stats[message_index]
+            stats_html = display_llm_stats(stats, dark_theme=True)
+            st.markdown(stats_html, unsafe_allow_html=True)
+        
         st.markdown('</div>', unsafe_allow_html=True)
 
 # Chat input
@@ -393,7 +541,15 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
     with st.spinner("🤖 News AI is thinking..."):
         try:
             if st.session_state.news_agent:
+                # Track timing for statistics
+                import time
+                start_time = time.time()
+                
                 response = st.session_state.news_agent.search_and_analyze(prompt)
+                
+                # Calculate duration and statistics
+                end_time = time.time()
+                duration = end_time - start_time
                 
                 # Add assistant response
                 response_timestamp = datetime.now().strftime("%H:%M:%S")
@@ -402,6 +558,11 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
                     "content": response,
                     "timestamp": response_timestamp
                 })
+                
+                # Calculate and store LLM statistics
+                current_model = st.session_state.get('current_model', 'Unknown')
+                stats = format_llm_stats(prompt, response, duration, current_model)
+                st.session_state.llm_stats.append(stats)
                 
                 # Display assistant response with Markdown rendering
                 processed_response = process_assistant_content(response)
@@ -412,6 +573,11 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
                     <strong>🤖 News AI</strong> <small>{response_timestamp}</small><br>
                 """, unsafe_allow_html=True)
                 st.markdown(processed_response)
+                
+                # Display LLM statistics for this response
+                stats_html = display_llm_stats(stats, dark_theme=True)
+                st.markdown(stats_html, unsafe_allow_html=True)
+                
                 st.markdown('</div>', unsafe_allow_html=True)
                 
             else:
