@@ -27,8 +27,8 @@
 │   (Frontend)    │    │  (Core Logic)   │    │  (AI Models)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
-         │              ┌─────────────────┐             │
-         └──────────────│  Google ADK     │─────────────┘
+         │              ┌─────────────────┐              │
+         └──────────────│  Google ADK     │-─────────────┘
                         │  (News Search)  │
                         └─────────────────┘
 ```
@@ -45,12 +45,14 @@
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/toswari-ai/chatbot-news-agentic-adk.git
    cd chatbot-news-agentic-adk
    ```
 
 2. **Set up Python environment**
+
    ```bash
    # Using conda (recommended)
    conda create -n news-chatbot python=3.12
@@ -62,16 +64,19 @@
    ```
 
 3. **Install dependencies**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. **Configure environment variables**
+
    ```bash
    cp .env.example .env
    ```
-   
+
    Edit `.env` file with your credentials:
+
    ```env
    CLARIFAI_PAT=your_clarifai_personal_access_token_here
    GOOGLE_API_KEY=your_google_api_key_here
@@ -79,6 +84,7 @@
    ```
 
 5. **Start the application**
+
    ```bash
    # Using the start script
    ./start.sh
@@ -104,12 +110,14 @@
 ### Getting API Keys
 
 #### Clarifai Personal Access Token
+
 1. Sign up at [Clarifai](https://clarifai.com)
 2. Navigate to Settings → Security
 3. Create a new Personal Access Token
 4. Copy the token to your `.env` file
 
 #### Google Custom Search API (Optional)
+
 1. Visit [Google Cloud Console](https://console.cloud.google.com)
 2. Enable the Custom Search JSON API
 3. Create credentials and get your API key
@@ -148,6 +156,7 @@ Choose from multiple AI models in the sidebar:
 ## 🧪 Testing
 
 ### Run Unit Tests
+
 ```bash
 # Test Clarifai connection
 python test_clarifai.py
@@ -157,7 +166,9 @@ python test_chatbot.py
 ```
 
 ### Debug Mode
+
 Enable detailed logging by setting environment variable:
+
 ```bash
 export LITELLM_LOG=DEBUG
 ./start.sh
@@ -218,6 +229,7 @@ except ImportError:
 ## 🎨 UI Features
 
 ### Design Elements
+
 - **Gradient Header** - Eye-catching blue-orange gradient
 - **Sample Cards** - Interactive query buttons with hover effects
 - **Chat Interface** - Clean message bubbles with timestamps
@@ -225,6 +237,7 @@ except ImportError:
 - **Responsive Layout** - Mobile-friendly column design
 
 ### Custom CSS Styling
+
 - Message bubbles with distinct colors for user/assistant
 - Status indicators with green/red color coding
 - Hover animations for interactive elements
@@ -235,6 +248,7 @@ except ImportError:
 ### Common Issues
 
 #### 1. Clarifai Connection Failed
+
 ```bash
 # Check your PAT token
 echo $CLARIFAI_PAT
@@ -249,16 +263,19 @@ print('PAT:', os.getenv('CLARIFAI_PAT')[:10] + '...')
 ```
 
 #### 2. Model Not Found Error
+
 - Ensure your Clarifai account has access to the selected model
 - Try switching to `gpt-4o-mini` which is more widely available
 - Check Clarifai documentation for model availability
 
 #### 3. News Search Not Working
+
 - Google ADK is optional; the app uses mock results as fallback
 - Check Google API credentials if using real search
 - Verify search engine configuration
 
 #### 4. Streamlit Port Already in Use
+
 ```bash
 # Kill existing Streamlit processes
 pkill -f streamlit
@@ -270,6 +287,7 @@ streamlit run app.py --server.port 8502
 ### Debug Information
 
 Enable comprehensive logging:
+
 ```bash
 export LITELLM_LOG=DEBUG
 export STREAMLIT_LOGGER_LEVEL=DEBUG
@@ -315,12 +333,14 @@ black app.py news_agent_clarifai.py
 ## 📊 Performance
 
 ### Metrics
+
 - **Response Time**: ~2-3 seconds for news analysis
 - **Model Support**: 4+ AI models via Clarifai
 - **Concurrent Users**: Supports multiple Streamlit sessions
 - **Memory Usage**: ~200MB base + model overhead
 
 ### Optimization Tips
+
 - Use `gpt-4o-mini` for faster responses
 - Enable caching for repeated queries
 - Monitor token usage in debug mode

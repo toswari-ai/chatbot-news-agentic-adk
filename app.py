@@ -61,6 +61,18 @@ st.markdown("""
         background-color: #f8d7da;
         color: #721c24;
     }
+    .status-partial {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    .status-card {
+        background-color: #1a1a1a;
+        border: 1px solid #333333;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        color: #ffffff;
+    }
     .chat-message {
         padding: 1rem;
         margin: 0.5rem 0;
@@ -73,12 +85,53 @@ st.markdown("""
         color: #000000 !important;
     }
     .assistant-message {
-        background-color: #f1f8e9;
-        border-left: 4px solid #4caf50;
-        color: #000000 !important;
+        background-color: #1a1a1a;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     .assistant-message * {
-        color: #000000 !important;
+        color: #ffffff !important;
+    }
+    .assistant-message .content {
+        line-height: 1.4;
+        white-space: normal;
+    }
+    .assistant-message ul, .assistant-message ol {
+        margin: 0.3rem 0;
+        padding-left: 1.2rem;
+    }
+    .assistant-message li {
+        margin: 0.1rem 0;
+        line-height: 1.3;
+    }
+    .assistant-message p {
+        margin: 0.3rem 0;
+    }
+    .assistant-message-content {
+        background-color: #1a1a1a;
+        color: #ffffff !important;
+        padding: 0.5rem;
+        border-radius: 5px;
+        margin-top: 0.5rem;
+    }
+    .assistant-message-content * {
+        color: #ffffff !important;
+    }
+    .assistant-message-content ul, .assistant-message-content ol {
+        margin: 0.3rem 0;
+        padding-left: 1.2rem;
+    }
+    .assistant-message-content li {
+        margin: 0.1rem 0;
+        line-height: 1.3;
+    }
+    .assistant-message-content p {
+        margin: 0.3rem 0;
+        line-height: 1.4;
+    }
+    .assistant-message-content h1, .assistant-message-content h2, .assistant-message-content h3 {
+        color: #ffffff !important;
+        margin: 0.5rem 0 0.3rem 0;
     }
     .user-message * {
         color: #000000 !important;
@@ -93,6 +146,24 @@ if 'news_agent' not in st.session_state:
     st.session_state.news_agent = None
 if 'clarifai_connected' not in st.session_state:
     st.session_state.clarifai_connected = False
+
+def process_assistant_content(content):
+    """Process assistant content to improve formatting for Markdown"""
+    import re
+    
+    # Keep numbered lists as they are for proper Markdown rendering
+    # Markdown will handle the formatting automatically
+    
+    # Remove excessive line breaks (more than 2 consecutive newlines)
+    content = re.sub(r'\n{3,}', '\n\n', content)
+    
+    # Ensure proper spacing around headers
+    content = re.sub(r'\n(#+\s)', r'\n\n\1', content)
+    
+    # Ensure proper spacing around lists
+    content = re.sub(r'\n(\d+\.\s|\*\s|-\s)', r'\n\1', content)
+    
+    return content.strip()
 
 def initialize_agent(model_name):
     """Initialize the news agent with selected model"""
@@ -277,19 +348,29 @@ for message in st.session_state.messages:
     timestamp = message.get('timestamp', '')
     
     if message["role"] == "user":
+        # Escape HTML in message content to prevent rendering issues
+        import html
+        escaped_content = html.escape(message["content"])
         st.markdown(f"""
         <div class="chat-message user-message">
             <strong>👤 You</strong> <small>{timestamp}</small><br>
-            {message["content"]}
+            <div style="white-space: pre-wrap;">{escaped_content}</div>
         </div>
         """, unsafe_allow_html=True)
     else:
+        # Process content and render as Markdown
+        processed_content = process_assistant_content(message["content"])
         st.markdown(f"""
         <div class="chat-message assistant-message">
             <strong>🤖 News AI</strong> <small>{timestamp}</small><br>
-            {message["content"]}
         </div>
         """, unsafe_allow_html=True)
+        
+        # Render the processed content as Markdown within the assistant message styling
+        with st.container():
+            st.markdown(f'<div class="assistant-message-content">', unsafe_allow_html=True)
+            st.markdown(processed_content)
+            st.markdown('</div>', unsafe_allow_html=True)
 
 # Chat input
 if prompt := st.chat_input("Ask me about news, current events, or any topic..."):
@@ -302,10 +383,12 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
     })
     
     # Display user message immediately
+    import html
+    escaped_prompt = html.escape(prompt)
     st.markdown(f"""
     <div class="chat-message user-message">
         <strong>👤 You</strong> <small>{timestamp}</small><br>
-        {prompt}
+        <div style="white-space: pre-wrap;">{escaped_prompt}</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -323,13 +406,19 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
                     "timestamp": response_timestamp
                 })
                 
-                # Display assistant response
+                # Display assistant response with Markdown rendering
+                processed_response = process_assistant_content(response)
                 st.markdown(f"""
                 <div class="chat-message assistant-message">
                     <strong>🤖 News AI</strong> <small>{response_timestamp}</small><br>
-                    {response}
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # Render the processed content as Markdown
+                with st.container():
+                    st.markdown(f'<div class="assistant-message-content">', unsafe_allow_html=True)
+                    st.markdown(processed_response)
+                    st.markdown('</div>', unsafe_allow_html=True)
                 
             else:
                 error_msg = "❌ News agent is not initialized. Please check your configuration."
