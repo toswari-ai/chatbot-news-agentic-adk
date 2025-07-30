@@ -16,7 +16,8 @@
 - 🎯 **Quick Start Cards** - Pre-built queries for World News, Tech & Business, Health & Science
 - 🔄 **Model Selection** - Support for GPT-4o, Claude 3.5 Sonnet, LLaMA models
 - 📊 **LLM Statistics Tracking** - Real-time token usage, response times, and performance metrics
-- 📱 **Responsive Design** - Mobile-friendly interface with modern black/white styling
+- � **Streaming Responses** - Real-time AI text generation with live updates
+- �📱 **Responsive Design** - Mobile-friendly interface with modern black/white styling
 - 🔍 **Debug Mode** - Comprehensive logging for troubleshooting
 - ⚡ **LiteLLM Integration** - Unified interface for multiple AI providers
 - 📈 **Performance Analytics** - Session-wide statistics and per-message metrics
@@ -383,7 +384,7 @@ black app.py news_agent_clarifai.py
 
 ## 🆕 Recent Updates
 
-### Version 1.2.0 - LLM Analytics & Enhanced UI (January 2025)
+### Version 1.2.1 - LLM Analytics & Enhanced UI (07/30/2025)
 
 #### ✨ New Features
 
@@ -392,6 +393,7 @@ black app.py news_agent_clarifai.py
 - **📈 Performance Analytics**: Session-wide statistics and per-message metrics display
 - **📝 Improved Markdown**: Enhanced text rendering with proper formatting support
 - **🔧 Styled Containers**: Consistent design language across all UI components
+- **🔄 Streaming Responses**: Real-time LLM response generation for improved user experience
 
 #### 🚀 Performance Improvements
 
