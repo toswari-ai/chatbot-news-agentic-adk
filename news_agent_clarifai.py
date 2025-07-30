@@ -332,6 +332,58 @@ Format your response in a clear, engaging way that helps the user understand the
         except Exception as e:
             logger.error(f"AI analysis failed: {str(e)}")
             return self._format_basic_response(search_results, original_query)
+
+    def analyze_with_ai_stream(self, search_results: List[Dict], original_query: str):
+        """Analyze search results using AI with streaming response"""
+        if not self.clarifai_pat:
+            logger.warning("No Clarifai PAT available for AI analysis")
+            yield self._format_basic_response(search_results, original_query)
+            return
+            
+        try:
+            # Create context from search results
+            context = ""
+            for i, result in enumerate(search_results, 1):
+                context += f"\n{i}. **{result['title']}** ({result['source']}, {result['published']})\n"
+                context += f"   {result['snippet']}\n"
+                context += f"   URL: {result['url']}\n"
+            
+            if not context.strip():
+                logger.warning("No search results to analyze")
+                yield "I couldn't find any recent news articles for your query. Please try a different search term or check back later."
+                return
+            
+            prompt = f"""Based on the following news articles about "{original_query}", provide a comprehensive analysis:
+
+{context}
+
+Please provide:
+1. A summary of the key developments
+2. Analysis of the main trends and patterns
+3. Potential implications or future outlook
+4. Any important context or background information
+
+Format your response in a clear, engaging way that helps the user understand the current situation."""
+
+            # Get AI analysis using Clarifai via LiteLLM with streaming
+            response = completion(
+                model=self.clarifai_model_name,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=800,
+                temperature=0.7,
+                base_url="https://api.clarifai.com/v2/ext/openai/v1",
+                api_key=self.clarifai_pat,
+                stream=True
+            )
+            
+            # Stream the response
+            for chunk in response:
+                if chunk.choices[0].delta.content is not None:
+                    yield chunk.choices[0].delta.content
+            
+        except Exception as e:
+            logger.error(f"Streaming AI analysis failed: {str(e)}")
+            yield self._format_basic_response(search_results, original_query)
     
     def _format_basic_response(self, search_results: List[Dict], query: str) -> str:
         """Format a basic response without AI analysis"""
@@ -367,6 +419,27 @@ Format your response in a clear, engaging way that helps the user understand the
         except Exception as e:
             logger.error(f"Search and analysis failed: {str(e)}")
             return f"❌ Sorry, I encountered an error while processing your request: {str(e)}\n\nPlease try again or check your configuration."
+
+    def search_and_analyze_stream(self, query: str):
+        """Main method to search for news and provide AI analysis with streaming"""
+        try:
+            # Search for news
+            search_results = self.search_news(query, num_results=5)
+            
+            # Analyze with AI using streaming
+            for chunk in self.analyze_with_ai_stream(search_results, query):
+                yield chunk
+            
+            # Add source links at the end
+            sources_section = "\n\n---\n\n**📰 Sources:**\n"
+            for i, result in enumerate(search_results, 1):
+                sources_section += f"{i}. [{result['title']}]({result['url']}) - {result['source']}\n"
+            
+            yield sources_section
+            
+        except Exception as e:
+            logger.error(f"Streaming search and analysis failed: {str(e)}")
+            yield f"❌ Sorry, I encountered an error while processing your request: {str(e)}\n\nPlease try again or check your configuration."
 
 # Utility functions for the agent
 def get_available_models() -> List[str]:

@@ -161,18 +161,22 @@ Choose from multiple AI models in the sidebar:
 The application provides comprehensive real-time analytics for LLM usage:
 
 #### Sidebar Statistics Panel
+
 - **Latest Response Metrics**: Model used, tokens consumed, response speed, duration
 - **Session Totals**: Cumulative token usage, total responses, average speed
 - **Performance Tracking**: Tokens per second, response timing analysis
 
 #### Per-Message Statistics
+
 Each AI response includes detailed performance metrics:
+
 - **Model Information**: Which AI model processed the request
 - **Token Breakdown**: Prompt tokens, response tokens, total usage
 - **Performance Data**: Response duration and processing speed
 - **Cost Estimation**: Token usage for billing and optimization
 
 #### Key Metrics Tracked
+
 - 🔢 **Token Usage**: Prompt tokens, response tokens, total consumption
 - ⏱️ **Response Time**: Processing duration in seconds
 - 🚀 **Speed**: Tokens generated per second
@@ -180,6 +184,7 @@ Each AI response includes detailed performance metrics:
 - 🎯 **Model Performance**: Compare efficiency across different AI models
 
 This helps users:
+
 - Monitor API usage and costs
 - Compare model performance
 - Optimize query efficiency
@@ -190,17 +195,20 @@ This helps users:
 The application features a modern, professional interface with:
 
 #### Dark Theme Design
+
 - **Modern Styling**: Black backgrounds with white text for reduced eye strain
 - **Styled Containers**: Consistent design language across all UI components
 - **Professional Layout**: Clean, organized interface with intuitive navigation
 
 #### Interactive Elements
+
 - **Markdown Rendering**: Full support for formatted text, lists, and headers
 - **Responsive Design**: Optimized for desktop and mobile devices
 - **Quick Start Cards**: One-click access to popular query types
 - **Real-time Updates**: Live statistics and performance monitoring
 
 #### Visual Features
+
 - **Status Indicators**: Color-coded connection and agent status
 - **Statistics Containers**: Styled boxes for performance metrics display
 - **Message Styling**: Distinct formatting for user and AI messages
@@ -378,6 +386,7 @@ black app.py news_agent_clarifai.py
 ### Version 1.2.0 - LLM Analytics & Enhanced UI (January 2025)
 
 #### ✨ New Features
+
 - **📊 LLM Statistics Tracking**: Real-time monitoring of token usage, response times, and performance metrics
 - **🎨 Enhanced Dark Theme**: Modern black/white styling with professional visual design
 - **📈 Performance Analytics**: Session-wide statistics and per-message metrics display
@@ -385,12 +394,14 @@ black app.py news_agent_clarifai.py
 - **🔧 Styled Containers**: Consistent design language across all UI components
 
 #### 🚀 Performance Improvements
+
 - **Optimized Token Counting**: Accurate estimation for cost monitoring
 - **Response Timing**: Precise duration tracking for performance analysis
 - **Statistics Caching**: Efficient session state management
 - **UI Responsiveness**: Faster rendering of statistics and chat messages
 
 #### 🐛 Bug Fixes
+
 - Fixed statistics container HTML structure for proper styling
 - Improved message formatting and display consistency
 - Enhanced error handling for API failures

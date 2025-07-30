@@ -251,6 +251,35 @@ def display_llm_stats(stats, dark_theme=True):
     """
     return stats_html
 
+def handle_streaming_response(agent, query, current_model):
+    """Handle streaming response from the agent"""
+    import time
+    start_time = time.time()
+    
+    # Create placeholder for streaming content
+    response_container = st.empty()
+    streamed_content = ""
+    
+    try:
+        # Stream the response
+        for chunk in agent.search_and_analyze_stream(query):
+            streamed_content += chunk
+            
+            # Update the display with accumulated content
+            processed_content = process_assistant_content(streamed_content)
+            response_container.markdown(processed_content)
+        
+        # Calculate final statistics
+        end_time = time.time()
+        duration = end_time - start_time
+        
+        return streamed_content, duration
+        
+    except Exception as e:
+        error_msg = f"❌ Error during streaming: {str(e)}"
+        response_container.markdown(error_msg)
+        return error_msg, time.time() - start_time
+
 def initialize_agent(model_name):
     """Initialize the news agent with selected model"""
     try:
@@ -299,6 +328,14 @@ with st.sidebar:
         model_options,
         index=0,
         help="Select the AI model for news analysis and responses"
+    )
+    
+    # Streaming toggle
+    st.subheader("⚡ Response Settings")
+    use_streaming = st.toggle(
+        "🔄 Enable Streaming",
+        value=True,
+        help="Stream AI responses in real-time for better user experience"
     )
     
     # Initialize agent when model changes
@@ -428,53 +465,106 @@ for i, (col, sample) in enumerate(zip([col1, col2, col3], sample_queries)):
             })
             
             # Process the query immediately
-            with st.spinner("🤖 News AI is thinking..."):
+            if use_streaming:
+                # Streaming response
+                st.write("🔍 Processing your query...")
+                
+                # Add user message first
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                st.session_state.messages.append({
+                    "role": "user", 
+                    "content": sample['query'],
+                    "timestamp": timestamp
+                })
+                
+                # Display assistant message header
+                response_timestamp = datetime.now().strftime("%H:%M:%S")
+                st.markdown(f"""
+                <div class="chat-message assistant-message">
+                    <strong>🤖 News AI</strong> <small>{response_timestamp}</small><br>
+                """, unsafe_allow_html=True)
+                
                 try:
                     if st.session_state.news_agent:
-                        st.write("🔍 Processing your query...")  # Debug output
+                        # Handle streaming response
+                        response, duration = handle_streaming_response(
+                            st.session_state.news_agent, 
+                            sample['query'], 
+                            st.session_state.get('current_model', 'Unknown')
+                        )
                         
-                        # Track timing for statistics
-                        import time
-                        start_time = time.time()
-                        
-                        response = st.session_state.news_agent.search_and_analyze(sample['query'])
-                        
-                        # Calculate duration and statistics
-                        end_time = time.time()
-                        duration = end_time - start_time
-                        
-                        # Add assistant response
-                        response_timestamp = datetime.now().strftime("%H:%M:%S")
+                        # Add to session state
                         st.session_state.messages.append({
                             "role": "assistant", 
                             "content": response,
                             "timestamp": response_timestamp
                         })
                         
-                        # Calculate and store LLM statistics
+                        # Calculate and display statistics
                         current_model = st.session_state.get('current_model', 'Unknown')
                         stats = format_llm_stats(sample['query'], response, duration, current_model)
                         st.session_state.llm_stats.append(stats)
                         
-                        st.write("✅ Response generated!")  # Debug output
+                        stats_html = display_llm_stats(stats, dark_theme=True)
+                        st.markdown(stats_html, unsafe_allow_html=True)
                         
                     else:
-                        error_msg = "❌ News agent is not initialized. Please check your configuration."
+                        st.error("❌ News agent is not initialized.")
+                        
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+            else:
+                # Non-streaming response (original behavior)
+                with st.spinner("🤖 News AI is thinking..."):
+                    try:
+                        if st.session_state.news_agent:
+                            st.write("🔍 Processing your query...")  # Debug output
+                            
+                            # Track timing for statistics
+                            import time
+                            start_time = time.time()
+                            
+                            response = st.session_state.news_agent.search_and_analyze(sample['query'])
+                            
+                            # Calculate duration and statistics
+                            end_time = time.time()
+                            duration = end_time - start_time
+                            
+                            # Add assistant response
+                            response_timestamp = datetime.now().strftime("%H:%M:%S")
+                            st.session_state.messages.append({
+                                "role": "assistant", 
+                                "content": response,
+                                "timestamp": response_timestamp
+                            })
+                            
+                            # Calculate and store LLM statistics
+                            current_model = st.session_state.get('current_model', 'Unknown')
+                            stats = format_llm_stats(sample['query'], response, duration, current_model)
+                            st.session_state.llm_stats.append(stats)
+                            
+                            st.write("✅ Response generated!")  # Debug output
+                            
+                        else:
+                            error_msg = "❌ News agent is not initialized. Please check your configuration."
+                            st.session_state.messages.append({
+                                "role": "assistant", 
+                                "content": error_msg,
+                                "timestamp": datetime.now().strftime("%H:%M:%S")
+                            })
+                            st.error("Agent not ready")
+                            
+                    except Exception as e:
+                        error_msg = f"❌ Error generating response: {str(e)}"
                         st.session_state.messages.append({
                             "role": "assistant", 
                             "content": error_msg,
                             "timestamp": datetime.now().strftime("%H:%M:%S")
                         })
-                        st.error("Agent not ready")
-                        
-                except Exception as e:
-                    error_msg = f"❌ Error generating response: {str(e)}"
-                    st.session_state.messages.append({
-                        "role": "assistant", 
-                        "content": error_msg,
-                        "timestamp": datetime.now().strftime("%H:%M:%S")
-                    })
-                    st.error(f"Error: {str(e)}")  # Debug output
+                        st.error(f"Error: {str(e)}")  # Debug output
             
             st.rerun()
 
@@ -538,47 +628,38 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
     """, unsafe_allow_html=True)
     
     # Generate response
-    with st.spinner("🤖 News AI is thinking..."):
+    if use_streaming:
+        # Streaming response
+        # Display assistant message header
+        response_timestamp = datetime.now().strftime("%H:%M:%S")
+        st.markdown(f"""
+        <div class="chat-message assistant-message">
+            <strong>🤖 News AI</strong> <small>{response_timestamp}</small><br>
+        """, unsafe_allow_html=True)
+        
         try:
             if st.session_state.news_agent:
-                # Track timing for statistics
-                import time
-                start_time = time.time()
+                # Handle streaming response
+                response, duration = handle_streaming_response(
+                    st.session_state.news_agent, 
+                    prompt, 
+                    st.session_state.get('current_model', 'Unknown')
+                )
                 
-                response = st.session_state.news_agent.search_and_analyze(prompt)
-                
-                # Calculate duration and statistics
-                end_time = time.time()
-                duration = end_time - start_time
-                
-                # Add assistant response
-                response_timestamp = datetime.now().strftime("%H:%M:%S")
+                # Add to session state
                 st.session_state.messages.append({
                     "role": "assistant", 
                     "content": response,
                     "timestamp": response_timestamp
                 })
                 
-                # Calculate and store LLM statistics
+                # Calculate and display statistics
                 current_model = st.session_state.get('current_model', 'Unknown')
                 stats = format_llm_stats(prompt, response, duration, current_model)
                 st.session_state.llm_stats.append(stats)
                 
-                # Display assistant response with Markdown rendering
-                processed_response = process_assistant_content(response)
-                
-                # Render everything in a single container
-                st.markdown(f"""
-                <div class="chat-message assistant-message">
-                    <strong>🤖 News AI</strong> <small>{response_timestamp}</small><br>
-                """, unsafe_allow_html=True)
-                st.markdown(processed_response)
-                
-                # Display LLM statistics for this response
                 stats_html = display_llm_stats(stats, dark_theme=True)
                 st.markdown(stats_html, unsafe_allow_html=True)
-                
-                st.markdown('</div>', unsafe_allow_html=True)
                 
             else:
                 error_msg = "❌ News agent is not initialized. Please check your configuration."
@@ -597,6 +678,70 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
                 "timestamp": datetime.now().strftime("%H:%M:%S")
             })
             st.error(error_msg)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    else:
+        # Non-streaming response (original behavior)
+        with st.spinner("🤖 News AI is thinking..."):
+            try:
+                if st.session_state.news_agent:
+                    # Track timing for statistics
+                    import time
+                    start_time = time.time()
+                    
+                    response = st.session_state.news_agent.search_and_analyze(prompt)
+                    
+                    # Calculate duration and statistics
+                    end_time = time.time()
+                    duration = end_time - start_time
+                    
+                    # Add assistant response
+                    response_timestamp = datetime.now().strftime("%H:%M:%S")
+                    st.session_state.messages.append({
+                        "role": "assistant", 
+                        "content": response,
+                        "timestamp": response_timestamp
+                    })
+                    
+                    # Calculate and store LLM statistics
+                    current_model = st.session_state.get('current_model', 'Unknown')
+                    stats = format_llm_stats(prompt, response, duration, current_model)
+                    st.session_state.llm_stats.append(stats)
+                    
+                    # Display assistant response with Markdown rendering
+                    processed_response = process_assistant_content(response)
+                    
+                    # Render everything in a single container
+                    st.markdown(f"""
+                    <div class="chat-message assistant-message">
+                        <strong>🤖 News AI</strong> <small>{response_timestamp}</small><br>
+                    """, unsafe_allow_html=True)
+                    st.markdown(processed_response)
+                    
+                    # Display LLM statistics for this response
+                    stats_html = display_llm_stats(stats, dark_theme=True)
+                    st.markdown(stats_html, unsafe_allow_html=True)
+                    
+                    st.markdown('</div>', unsafe_allow_html=True)
+                    
+                else:
+                    error_msg = "❌ News agent is not initialized. Please check your configuration."
+                    st.session_state.messages.append({
+                        "role": "assistant", 
+                        "content": error_msg,
+                        "timestamp": datetime.now().strftime("%H:%M:%S")
+                    })
+                    st.error(error_msg)
+                    
+            except Exception as e:
+                error_msg = f"❌ Error generating response: {str(e)}"
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": error_msg,
+                    "timestamp": datetime.now().strftime("%H:%M:%S")
+                })
+                st.error(error_msg)
     
     st.rerun()
 
