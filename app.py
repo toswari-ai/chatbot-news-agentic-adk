@@ -360,17 +360,14 @@ for message in st.session_state.messages:
     else:
         # Process content and render as Markdown
         processed_content = process_assistant_content(message["content"])
+        
+        # Render everything in a single container
         st.markdown(f"""
         <div class="chat-message assistant-message">
             <strong>🤖 News AI</strong> <small>{timestamp}</small><br>
-        </div>
         """, unsafe_allow_html=True)
-        
-        # Render the processed content as Markdown within the assistant message styling
-        with st.container():
-            st.markdown(f'<div class="assistant-message-content">', unsafe_allow_html=True)
-            st.markdown(processed_content)
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(processed_content)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # Chat input
 if prompt := st.chat_input("Ask me about news, current events, or any topic..."):
@@ -408,17 +405,14 @@ if prompt := st.chat_input("Ask me about news, current events, or any topic...")
                 
                 # Display assistant response with Markdown rendering
                 processed_response = process_assistant_content(response)
+                
+                # Render everything in a single container
                 st.markdown(f"""
                 <div class="chat-message assistant-message">
                     <strong>🤖 News AI</strong> <small>{response_timestamp}</small><br>
-                </div>
                 """, unsafe_allow_html=True)
-                
-                # Render the processed content as Markdown
-                with st.container():
-                    st.markdown(f'<div class="assistant-message-content">', unsafe_allow_html=True)
-                    st.markdown(processed_response)
-                    st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown(processed_response)
+                st.markdown('</div>', unsafe_allow_html=True)
                 
             else:
                 error_msg = "❌ News agent is not initialized. Please check your configuration."
